@@ -128,7 +128,7 @@ private fun runCommand(args: Array<String>) {
             spring = args.contains("--spring"),
             workingTree = args.contains("--working-tree")
         )
-        else -> throw CliException("comando '${args[0]}' non riconosciuto. Usa --help.")
+        else -> throw CliException("unknown command '${args[0]}'. Use --help.")
     }
 }
 
@@ -214,8 +214,8 @@ private fun printStatus(path: Path, json: Boolean) {
         println("Repository: ${status.root}")
         println("HEAD:       ${status.head}")
         println("Branch:     ${status.branch ?: "detached"}")
-        println("Build:      ${layout.buildSystems.joinToString().ifEmpty { "non rilevato" }}")
-        println("Indexed:    ${indexedRevision ?: "mai"}")
+        println("Build:      ${layout.buildSystems.joinToString().ifEmpty { "not detected" }}")
+        println("Indexed:    ${indexedRevision ?: "never"}")
         println("Working tree:")
         println("  staged:    ${status.stagedFiles.size}")
         println("  modified:  ${status.modifiedFiles.size}")
@@ -225,7 +225,7 @@ private fun printStatus(path: Path, json: Boolean) {
 }
 
 private fun printValidation(path: Path, json: Boolean) {
-    if (!path.toFile().exists()) throw CliException("file osservazioni non trovato: $path")
+    if (!path.toFile().exists()) throw CliException("observation file not found: $path")
     val report = ValidationGateEvaluator.evaluate(ValidationObservationFile.read(path))
     if (json) {
         println(ObjectMapper().writeValueAsString(report))
@@ -238,7 +238,7 @@ private fun printValidation(path: Path, json: Boolean) {
 
 private fun printPreflight(path: Path, json: Boolean) {
     val root = path.toAbsolutePath().normalize()
-    if (!root.toFile().isDirectory) throw CliException("directory repository non trovato: $root")
+    if (!root.toFile().isDirectory) throw CliException("repository directory not found: $root")
     val status = ScipPreflight().check(root)
     if (json) {
         val diagnostics = status.diagnostics.joinToString(prefix = "[", postfix = "]") { quoteJson(it) }
@@ -332,10 +332,10 @@ private fun printIndex(path: Path, json: Boolean, scip: Boolean, spring: Boolean
             } catch (error: IndexingException) {
                 if (!scip) throw error
 
-                val detail = error.message ?: "errore non specificato"
+                val detail = error.message ?: "unspecified error"
                 val mode = if (workingTree) "working-tree" else "baseline"
-                System.err.println("SCIP non disponibile ($mode): $detail")
-                System.err.println("Continuo con l'indicizzatore locale JVM/Spring di Arianna.")
+                System.err.println("SCIP unavailable ($mode): $detail")
+                System.err.println("Continuing with Arianna's local JVM/Spring indexer.")
                 if (workingTree) {
                     SpringAwareIndexer().indexOverlay(repository, store, progress)
                 } else {
@@ -348,7 +348,7 @@ private fun printIndex(path: Path, json: Boolean, scip: Boolean, spring: Boolean
         if (json) {
             println("{\"revision\":\"${result.revision}\",\"indexedFiles\":${result.indexedFiles},\"indexedEntities\":${result.indexedEntities},\"indexedRelations\":${result.indexedRelations}}")
         } else {
-            println("Indice aggiornato")
+            println("Index updated")
             println("  revision: ${result.revision}")
             println("  files:    ${result.indexedFiles}")
             println("  entities: ${result.indexedEntities}")
@@ -450,7 +450,7 @@ internal fun formatElapsed(totalSeconds: Long): String {
 
 internal fun ensureBaselineSnapshotForOverlay(store: SQLiteKnowledgeStore, root: Path) {
     if (store.getCurrentSnapshot(root.toString()) == null) {
-        throw CliException("baseline non trovata. Esegui prima 'learn index' su una revisione pulita, poi 'learn index --working-tree'.")
+        throw CliException("baseline not found. Run 'learn index' on a clean revision first, then run 'learn index --working-tree'.")
     }
 }
 
@@ -478,12 +478,12 @@ private fun printDiff(path: Path, json: Boolean, workingTree: Boolean, baseRevis
     val repository = openRepositorySource(path)
     val root = Path.of(repository.repositoryStatus().root)
     val config = AppConfig.forRepository(root)
-    if (!config.databaseFile.toFile().exists()) throw CliException("indice non trovato: ${config.databaseFile}. Esegui 'learn index'.")
+    if (!config.databaseFile.toFile().exists()) throw CliException("index not found: ${config.databaseFile}. Run 'learn index'.")
     SQLiteKnowledgeStore(config.databaseFile).use { store ->
         val baseline = store.getCurrentSnapshot(root.toString())
-            ?: throw CliException("baseline non trovata. Esegui 'learn index'.")
+            ?: throw CliException("baseline not found. Run 'learn index'.")
         val overlay = store.getLatestSnapshot(root.toString(), SnapshotKind.WORKING_TREE)
-            ?: throw CliException("overlay non trovato. Esegui 'learn index --working-tree'.")
+            ?: throw CliException("overlay not found. Run 'learn index --working-tree'.")
         ensureCurrentWorkingTree(repository, overlay.revision)
         val diff = SnapshotComparator.compare(
             baseline.revision,
@@ -549,12 +549,12 @@ private fun printImpact(path: Path, json: Boolean, workingTree: Boolean, baseRev
     val repository = openRepositorySource(path)
     val root = Path.of(repository.repositoryStatus().root)
     val config = AppConfig.forRepository(root)
-    if (!config.databaseFile.toFile().exists()) throw CliException("indice non trovato: ${config.databaseFile}. Esegui 'learn index'.")
+    if (!config.databaseFile.toFile().exists()) throw CliException("index not found: ${config.databaseFile}. Run 'learn index'.")
     SQLiteKnowledgeStore(config.databaseFile).use { store ->
         val baseline = store.getCurrentSnapshot(root.toString())
-            ?: throw CliException("baseline non trovata. Esegui 'learn index'.")
+            ?: throw CliException("baseline not found. Run 'learn index'.")
         val overlay = store.getLatestSnapshot(root.toString(), SnapshotKind.WORKING_TREE)
-            ?: throw CliException("overlay non trovato. Esegui 'learn index --working-tree'.")
+            ?: throw CliException("overlay not found. Run 'learn index --working-tree'.")
         ensureCurrentWorkingTree(repository, overlay.revision)
         val baseEntities = store.entitiesForSnapshot(baseline.id)
         val overlayEntities = store.entitiesForSnapshot(overlay.id)
@@ -700,10 +700,10 @@ private fun withStoredWorkingTreeChange(
     val repository = openRepositorySource(path)
     val root = Path.of(repository.repositoryStatus().root)
     val config = AppConfig.forRepository(root)
-    if (!config.databaseFile.toFile().exists()) throw CliException("indice non trovato: ${config.databaseFile}. Esegui 'learn index'.")
+    if (!config.databaseFile.toFile().exists()) throw CliException("index not found: ${config.databaseFile}. Run 'learn index'.")
     SQLiteKnowledgeStore(config.databaseFile).use { store ->
-        val baseline = store.getCurrentSnapshot(root.toString()) ?: throw CliException("baseline non trovata. Esegui 'learn index'.")
-        val overlay = store.getLatestSnapshot(root.toString(), SnapshotKind.WORKING_TREE) ?: throw CliException("overlay non trovato. Esegui 'learn index --working-tree'.")
+        val baseline = store.getCurrentSnapshot(root.toString()) ?: throw CliException("baseline not found. Run 'learn index'.")
+        val overlay = store.getLatestSnapshot(root.toString(), SnapshotKind.WORKING_TREE) ?: throw CliException("overlay not found. Run 'learn index --working-tree'.")
         ensureCurrentWorkingTree(repository, overlay.revision)
         val baseEntities = store.entitiesForSnapshot(baseline.id)
         val overlayEntities = store.entitiesForSnapshot(overlay.id)
@@ -722,7 +722,7 @@ private fun withStoredWorkingTreeChange(
 private fun ensureCurrentWorkingTree(repository: Source, overlayRevision: String) {
     val current = repository.workingTreeRevision()
     if (current != overlayRevision) {
-        throw CliException("overlay working-tree obsoleto. Esegui di nuovo 'learn index --working-tree'.")
+        throw CliException("working-tree overlay is stale. Run 'learn index --working-tree' again.")
     }
 }
 
@@ -831,7 +831,7 @@ internal fun queryArgument(arguments: List<String>): String {
             !value.startsWith("--") && (pathIndex < 0 || index != pathIndex + 1)
         }
         ?.value
-        ?: throw CliException("manca il termine o simbolo da cercare")
+        ?: throw CliException("missing search term or symbol")
 }
 
 private fun queryPath(arguments: List<String>): Path {
@@ -860,7 +860,7 @@ private fun printSearchKnowledge(query: String, path: Path, json: Boolean, limit
 private fun printDocument(pathValue: String, repositoryPath: Path, json: Boolean) {
     withQueryEngine(repositoryPath) { engine ->
         val document = engine.getDocument(pathValue)
-            ?: throw CliException("documento non trovato nell’indice: $pathValue")
+            ?: throw CliException("document not found in the index: $pathValue")
         if (json) {
             println(document.toDocumentJson())
         } else {
@@ -909,7 +909,7 @@ private fun withQueryEngine(path: Path, block: (KnowledgeQueryEngine) -> Unit) {
     val root = Path.of(repository.repositoryStatus().root)
     val config = AppConfig.forRepository(root)
     if (!config.databaseFile.toFile().exists()) {
-        throw CliException("indice non trovato: ${config.databaseFile}. Esegui 'learn index'.")
+        throw CliException("index not found: ${config.databaseFile}. Run 'learn index'.")
     }
     SQLiteKnowledgeStore(config.databaseFile).use { block(KnowledgeQueryEngine(it)) }
 }
@@ -968,43 +968,43 @@ private fun RepositoryStatus.toJson(layout: dev.arianna.core.source.ProjectLayou
 
 private fun printHelp() {
     println(
-        """Arianna — knowledge engine locale
+        """Arianna — local knowledge engine
 
-Uso:
+Usage:
   learn [path]              Index the repository and update the local index
   learn status [path]       Show repository status
   learn index [path]        Index repository, documents, and the local JVM graph
-  learn index --scip        Usa scip-java + scip per simboli e riferimenti
+  learn index --scip        Use scip-java + scip for symbols and references
   learn index --spring      Add static Spring relations
   learn index --working-tree Index the overlay and JVM graph without replacing the baseline
-  learn diff --working-tree  Confronta baseline e overlay
-  learn diff --base <rev> --head <rev> --path <repo> Confronta due revisioni Git
+  learn diff --working-tree  Compare baseline and overlay
+  learn diff --base <rev> --head <rev> --path <repo> Compare two Git revisions
   learn impact --working-tree Analyze local change impact
   learn impact --base <rev> --head <rev> --path <repo> Analyze impact for a Git revision pair
   learn plan-refactor --working-tree Generate the ordered refactoring plan
   learn plan-refactor --base <rev> --head <rev> --path <repo> Generate a plan for a Git revision pair
   learn verify-change --working-tree Verify change leftovers and risks
   learn verify-change --base <rev> --head <rev> --path <repo> Verify a Git revision pair
-  learn mcp [--path <repository>] Avvia il server MCP locale su stdio
-  learn serve [path]        Avvia il Web Explorer locale
-  learn export <path> --output <file.zip> Esporta un snapshot portatile
-  learn snapshot <file.zip> Avvia un Web Explorer read-only dallo snapshot
-  learn benchmark <path>     Misura indicizzazione e latenza query
-  learn benchmark <path> --baseline Misura la baseline diretta tipo grep
-  learn benchmark <path> --compare Confronta baseline diretta e Arianna
-  learn validate --observations <file.json> Valuta il gate sulle sessioni raccolte
-  learn preflight [path]   Verifica SCIP e il build tool Maven/Gradle
+  learn mcp [--path <repository>] Start the local MCP server over stdio
+  learn serve [path]        Start the local Web Explorer
+  learn export <path> --output <file.zip> Export a portable snapshot
+  learn snapshot <file.zip> Start a read-only Web Explorer from a snapshot
+  learn benchmark <path>     Measure indexing and query latency
+  learn benchmark <path> --baseline Measure the direct grep-like baseline
+  learn benchmark <path> --compare Compare the direct baseline with Arianna
+  learn validate --observations <file.json> Evaluate the gate on collected sessions
+  learn preflight [path]   Check SCIP and the Maven/Gradle build tool
   learn search <term>       Search entities and files in the index
   learn search-knowledge <term> Search entities and document content
-  learn get-document <path> Restituisce un documento indicizzato
+  learn get-document <path> Return an indexed document
   learn find-symbol <name>  Search for a symbol in the index
   learn references <name>   Search callers/references
   learn implementations <name> Search implementations
   learn relations <id>      Show direct relations
-  Opzioni query: --path <repository> --limit <n> --offset <n> --json
+  Query options: --path <repository> --limit <n> --offset <n> --json
   Relation options: --revision <revision> --confidence <high|medium|low>
-  Opzioni knowledge: --repository <id> --file <path> --kind <tipo>
-  learn status --json       Restituisce lo stato in JSON
+  Knowledge options: --repository <id> --file <path> --kind <kind>
+  learn status --json       Return status as JSON
   learn --version           Show the version
   learn --help              Show this help
 """.trimIndent()
