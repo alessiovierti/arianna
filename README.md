@@ -4,6 +4,14 @@ Arianna builds a local, evidence-first map of a software repository. It indexes 
 
 Use it to find relevant code, inspect relationships and estimate the impact of a change. Arianna exposes the same analysis engine through the `learn` CLI, a local Web Explorer and an MCP server for external AI agents.
 
+## See it in action
+
+The local Web Explorer turns repository knowledge into an explorable architecture map, with evidence-backed entities, relationships and review signals.
+
+![Arianna Web Explorer overview](docs/assets/web-explorer-overview.png)
+
+Run `learn serve .` to open the same view for your repository.
+
 ## What Arianna does
 
 - indexes Java and Kotlin repositories, with a conservative JVM fallback when SCIP is unavailable;
