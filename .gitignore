@@ -1,0 +1,9 @@
+.gradle-local/
+.gradle/
+.gradle-temp/
+kotlin-compiler-*
+build/
+out/
+.DS_Store
+.idea/
+.arianna/*

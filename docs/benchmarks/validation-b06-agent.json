@@ -1,0 +1,26 @@
+[
+  {
+    "taskId": "B06",
+    "condition": "AGENT_DIRECT",
+    "durationMillis": 20,
+    "exploredFiles": 2,
+    "queryCount": 2,
+    "correctionCycles": 0,
+    "reportUsedBeforeCompile": false,
+    "evidenceVerified": false,
+    "unresolvedDeclared": false,
+    "completed": true
+  },
+  {
+    "taskId": "B06",
+    "condition": "AGENT_ARIANNA_WITH_TESTS",
+    "durationMillis": 1540,
+    "exploredFiles": 2,
+    "queryCount": 3,
+    "correctionCycles": 0,
+    "reportUsedBeforeCompile": true,
+    "evidenceVerified": true,
+    "unresolvedDeclared": true,
+    "completed": true
+  }
+]
