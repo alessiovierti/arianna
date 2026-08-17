@@ -22,6 +22,7 @@ import dev.arianna.core.model.KnowledgeEntity
 import dev.arianna.core.model.KnowledgeRelation
 import dev.arianna.core.model.Origin
 import dev.arianna.core.source.RepositoryPathFilter
+import dev.arianna.core.source.TextFileReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -76,7 +77,7 @@ class SpringAdapter(
         beanTypeCounts: Map<String, BeanTypeInfo>
     ) {
         val relative = root.relativize(file).toString().replace(file.fileSystem.separator, "/")
-        val lines = Files.readAllLines(file)
+        val lines = TextFileReader.readLines(file)
         var currentType: String? = null
         var pendingComponent: String? = null
         var pendingEndpoint: EndpointAnnotation? = null
@@ -224,7 +225,7 @@ class SpringAdapter(
         relations: MutableMap<String, KnowledgeRelation>
     ) {
         val relative = root.relativize(file).toString().replace(file.fileSystem.separator, "/")
-        val lines = Files.readAllLines(file)
+        val lines = TextFileReader.readLines(file)
         val yamlPath = ArrayDeque<Pair<Int, String>>()
 
         lines.forEachIndexed { index, rawLine ->
@@ -337,7 +338,7 @@ class SpringAdapter(
         files.filter { it.toString().endsWith(".java") || it.toString().endsWith(".kt") }.forEach { file ->
             var pendingBean = false
             var pendingPrimary = false
-            Files.readAllLines(file).forEach { line ->
+            TextFileReader.readLines(file).forEach { line ->
                 if (line.contains("@Bean")) pendingBean = true
                 if (line.contains("@Primary")) pendingPrimary = true
                 if (!pendingBean) return@forEach

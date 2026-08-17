@@ -7,6 +7,7 @@ import dev.arianna.core.model.KnowledgeEntity
 import dev.arianna.core.model.KnowledgeRelation
 import dev.arianna.core.model.Origin
 import dev.arianna.core.source.RepositoryPathFilter
+import dev.arianna.core.source.TextFileReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -87,7 +88,7 @@ class JvmStructuralAdapter(
     ) {
         val relative = root.relativize(file).toString().replace(file.fileSystem.separator, "/")
         val testFile = isTestFile(relative)
-        val lines = Files.readAllLines(file)
+        val lines = TextFileReader.readLines(file)
         val packageName = lines.asSequence().mapNotNull { packagePattern.matcher(it).takeIf { match -> match.find() }?.group(1) }.firstOrNull()
         var currentType: String? = null
         var currentMethod: EntityId? = null
@@ -235,7 +236,7 @@ class JvmStructuralAdapter(
                 .forEach { file ->
                     var owner: String? = null
                     var pendingMethodText: String? = null
-                    Files.readAllLines(file).forEach { line ->
+                    TextFileReader.readLines(file).forEach { line ->
                         typePattern.matcher(line).takeIf { it.find() }?.let { owner = it.group(2) }
                         val candidate = if (pendingMethodText != null) {
                             pendingMethodText = "${pendingMethodText!!.trim()} ${line.trim()}"

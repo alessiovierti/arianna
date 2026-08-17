@@ -43,4 +43,26 @@ class HttpRouteAdapterTest {
 
         assertTrue(analysis.entities.none { it.qualifiedName.contains("/api/fixture") })
     }
+
+    @Test
+    fun `does not treat qualified get calls as ktor routes`() {
+        val root = createTempDirectory("arianna-http-map-get-")
+        val file = root.resolve("src/main/kotlin/Lookup.kt")
+        file.parent.createDirectories()
+        file.writeText(
+            """
+            fun lookup(routes: Map<String, String>) {
+                routes.get("/not-a-route")
+                response.get("/also-not-a-route")
+                get("/real-route") { call.respondText("ok") }
+            }
+            """.trimIndent()
+        )
+
+        val analysis = HttpRouteAdapter().analyze(root, "/repo", "HEAD")
+
+        assertTrue(analysis.entities.any { it.id.value == "endpoint:get:/real-route" })
+        assertTrue(analysis.entities.none { it.id.value == "endpoint:get:/not-a-route" })
+        assertTrue(analysis.entities.none { it.id.value == "endpoint:get:/also-not-a-route" })
+    }
 }

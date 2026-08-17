@@ -7,6 +7,7 @@ import dev.arianna.core.model.KnowledgeEntity
 import dev.arianna.core.model.KnowledgeRelation
 import dev.arianna.core.model.Origin
 import dev.arianna.core.source.RepositoryPathFilter
+import dev.arianna.core.source.TextFileReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -31,7 +32,7 @@ class HttpRouteAdapter(private val analyzerVersion: String = "http-route-adapter
     private fun analyzeFile(root: Path, file: Path, repository: String, revision: String, entities: MutableMap<String, KnowledgeEntity>, relations: MutableMap<String, KnowledgeRelation>) {
         val relative = root.relativize(file).toString().replace(file.fileSystem.separator, "/")
         var currentFunction: FunctionContext? = null
-        Files.readAllLines(file).forEachIndexed { index, line ->
+        TextFileReader.readLines(file).forEachIndexed { index, line ->
             val lineNumber = index + 1
             functionPattern.matcher(line).takeIf { it.find() }?.let { match ->
                 currentFunction = FunctionContext(match.group(1))
@@ -60,6 +61,8 @@ class HttpRouteAdapter(private val analyzerVersion: String = "http-route-adapter
 
     companion object {
         private val functionPattern = Pattern.compile("\\bfun\\s+([A-Za-z_][A-Za-z0-9_.]*)\\s*\\([^)]*\\)")
-        private val routePattern = Pattern.compile("\\b(get|post|put|patch|delete|head|options)\\s*\\(\\s*[\"']([^\"']+)[\"']")
+        // Ktor routes are unqualified DSL calls. The negative lookbehind avoids
+        // treating map.get("...") / response.get("...") as HTTP routes.
+        private val routePattern = Pattern.compile("(?<![.A-Za-z0-9_])\\b(get|post|put|patch|delete|head|options)\\s*\\(\\s*[\"']([^\"']+)[\"']")
     }
 }

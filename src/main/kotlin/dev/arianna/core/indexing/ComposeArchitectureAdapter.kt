@@ -6,6 +6,7 @@ import dev.arianna.core.model.Evidence
 import dev.arianna.core.model.KnowledgeEntity
 import dev.arianna.core.model.KnowledgeRelation
 import dev.arianna.core.model.Origin
+import dev.arianna.core.source.TextFileReader
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -74,7 +75,7 @@ object ComposeArchitectureAdapter {
         services: MutableMap<String, ServiceDefinition>
     ) {
         val relative = root.relativize(file).toString().replace(file.fileSystem.separator, "/")
-        val lines = Files.readAllLines(file)
+        val lines = TextFileReader.readLines(file)
         var inServices = false
         var current: ServiceDefinition? = null
         var inDependsOn = false

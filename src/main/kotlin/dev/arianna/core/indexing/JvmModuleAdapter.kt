@@ -7,6 +7,7 @@ import dev.arianna.core.model.KnowledgeEntity
 import dev.arianna.core.model.KnowledgeRelation
 import dev.arianna.core.model.Origin
 import dev.arianna.core.source.RepositoryPathFilter
+import dev.arianna.core.source.TextFileReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -31,7 +32,7 @@ class JvmModuleAdapter(
                     val parent = file.parent?.let { root.relativize(it).toString().replace(file.fileSystem.separator, "/") }.orEmpty()
                     val prefix = parent.takeIf { it.isNotEmpty() }?.replace('/', ':')
                     val evidence = Evidence(repository, revision, relative, analyzerVersion = analyzerVersion)
-                    parseIncludedModules(Files.readString(file)).forEach { included ->
+                    parseIncludedModules(TextFileReader.readText(file)).forEach { included ->
                         val moduleName = listOfNotNull(prefix, included).joinToString(":")
                         modules.putIfAbsent(moduleName, evidence)
                     }
@@ -46,7 +47,7 @@ class JvmModuleAdapter(
                     val parent = file.parent?.let { root.relativize(it).toString().replace(file.fileSystem.separator, "/") }.orEmpty()
                     val prefix = parent.takeIf { it.isNotEmpty() }?.replace('/', ':')
                     val evidence = Evidence(repository, revision, relative, analyzerVersion = analyzerVersion)
-                    modulePattern.matcher(Files.readString(file)).results().forEach { match ->
+                    modulePattern.matcher(TextFileReader.readText(file)).results().forEach { match ->
                         val moduleName = listOfNotNull(prefix, match.group(1).trim()).joinToString(":")
                         modules.putIfAbsent(moduleName, evidence)
                     }
@@ -87,7 +88,7 @@ class JvmModuleAdapter(
                 ?: return@forEach
             val relative = root.relativize(buildFile).toString().replace(buildFile.fileSystem.separator, "/")
             val evidence = Evidence(repository, revision, relative, analyzerVersion = analyzerVersion)
-            val buildText = Files.readString(buildFile)
+            val buildText = TextFileReader.readText(buildFile)
             val dependencies = buildList {
                 projectDependencyPattern.matcher(buildText).results().forEach { add(it.group(1)) }
                 if (buildFile.fileName.toString() == "pom.xml") {

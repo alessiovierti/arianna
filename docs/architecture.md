@@ -12,6 +12,8 @@ Arianna is a Kotlin/JVM 21 application with a local SQLite store. The installed 
 6. Document linking adds low-confidence relationships without presenting text matches as structural facts.
 7. Relations are normalized and the complete snapshot is published transactionally.
 
+Repository text is decoded as UTF-8 with replacement for malformed byte sequences, so one legacy or partially corrupted text file does not abort the indexing pipeline.
+
 Dynamic reflection, generated code, custom scanning and runtime-built routes remain uncertain unless an adapter can identify them explicitly.
 
 ## Knowledge model
